@@ -6,7 +6,7 @@
     <ListPreference
         android:title="@string/pref_cinema_label"
         android:key="@string/pref_cinema_key"
-        android:defaultValue="@string/pref_cinema_lagos"
+        android:defaultValue="@string/pref_cinema_ikeja"
         android:entryValues="@array/pref_cinema_values"
         android:entries="@array/prefs_cinema_options"/>
 

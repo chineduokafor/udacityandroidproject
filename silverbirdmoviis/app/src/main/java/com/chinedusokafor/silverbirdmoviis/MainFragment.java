@@ -187,7 +187,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String cinema = prefs.getString(getString(R.string.pref_cinema_key),
-                getString(R.string.pref_cinema_lagos));
+                getString(R.string.pref_cinema_ikeja));
 
         Uri movieForCinemaUri = MovieEntry.buildCinemaMovie(cinema);
         Log.d(LOG_TAG, "onCreateLoader() movieForCinemaUri: " + movieForCinemaUri);

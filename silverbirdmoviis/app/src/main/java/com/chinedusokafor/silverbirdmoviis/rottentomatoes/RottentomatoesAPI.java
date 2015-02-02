@@ -7,7 +7,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,8 +37,7 @@ public class RottentomatoesAPI {
                     JSONObject aMovieJsonObj = (JSONObject) moviesJsonArray.get(0);
                     String aMovieTitle = (String) aMovieJsonObj.get("title");
                     requiredJson = aMovieJsonObj;
-                    Log.d(LOG_TAG, "Got the json for the movie: " + movieTitle + " yipee!");
-                    
+
                 } else {
                     for (int i = 0; i < moviesJsonArray.length(); i++) {
                         JSONObject aMovieJsonObj = (JSONObject) moviesJsonArray.get(i);
@@ -44,7 +45,6 @@ public class RottentomatoesAPI {
                         Log.d(LOG_TAG, "search result" + aMovieTitle);
                         if (aMovieTitle.equalsIgnoreCase(movieTitle)) {
                             requiredJson = aMovieJsonObj;
-                            Log.d(LOG_TAG, "Got the json for the movie: " + movieTitle + " yipee!");                            
                             break;
                         }
                     }
@@ -99,21 +99,7 @@ public class RottentomatoesAPI {
         return jsonUrl;
     }
 
-    /*
 
-    public String getDateMovieReleased(JSONObject theMovieJson) {
-        String theDate = "";
-
-        JSONObject releaseDates = (JSONObject) theMovieJson.get("release_dates");
-        String theaterReleaseDate = (String) releaseDates.get("theater");
-        String dvdReleaseDate = (String) releaseDates.get("dvd");
-
-        theDate = theaterReleaseDate;
-
-        return theDate;
-    }
-
-    */
     public String getMovieGenres(JSONObject theMovieJson) {
         String genres = "";
         try {
@@ -168,6 +154,36 @@ public class RottentomatoesAPI {
         }
         return theDirectors;
     }
+
+    public ArrayList<String> getCurrentlyInTheatre() {
+        ArrayList<String> movieList = new ArrayList<String>();
+
+        try {
+            String apiUrl = "http://api.rottentomatoes.com/api/public/v1.0/lists/movies/in_theaters.json?"
+                    + "&page_limit=16&page=1" + "&apikey=" + GIDIMO_API_KEY;
+
+            String serverResponse = getResponseAtUrl(apiUrl);
+            JSONObject theServerResponseJson = new JSONObject(serverResponse);
+
+            JSONArray moviesJsonArray = (JSONArray) theServerResponseJson.get("movies");
+            if (moviesJsonArray.length() > 0) {
+                for (int i = 0; i < moviesJsonArray.length(); i++) {
+                    JSONObject movieJsonObj = (JSONObject) moviesJsonArray.get(i);
+                    String movieTitle = (String) movieJsonObj.get("title");
+                    movieList.add(movieTitle);
+                    Log.d(LOG_TAG, "movieTitle " + movieTitle);
+                }
+
+            } else {
+                //No movies match the search parameter
+            }
+        } catch(Exception e) {
+            Log.e(LOG_TAG, "getCurrentlyShowingMovies " + e.getMessage(), e);
+        }
+        return movieList;
+    }
+
+
 
 
     private String getResponseAtUrl(String urlConnString) {

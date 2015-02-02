@@ -22,6 +22,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.CursorLoader;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.chinedusokafor.silverbirdmoviis.MainActivity;
 import com.chinedusokafor.silverbirdmoviis.R;
@@ -88,7 +89,7 @@ public class SilverbirdmoviisSyncAdapter extends AbstractThreadedSyncAdapter {
         Log.d(LOG_TAG, "Starting sync");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         String cinema = prefs.getString(getContext().getString(R.string.pref_cinema_key),
-                getContext().getString(R.string.pref_cinema_lagos));
+                getContext().getString(R.string.pref_cinema_ikeja));
         ArrayList<String> movieTitles = getCinemaRssFeed(cinema);
 
         try {
@@ -107,23 +108,17 @@ public class SilverbirdmoviisSyncAdapter extends AbstractThreadedSyncAdapter {
                 JSONObject searchJson = rottentomatoesAPI.searchForMovie(movieTitle);
                 if(searchJson != null) {
                     String movieId = (String)searchJson.get("id");
-                    Log.d(LOG_TAG, "movieId: " + movieId);
-
-                    //check and send notification if movie is new
-                    Uri movieUri = MovieEntry.buildCinemaAndMovieId(cinema, movieId);
-                    Cursor  movieCursor = getContext().getContentResolver().query(
-                            movieUri, MOVIE_COLUMNS, null, null, "");
-                    //Log.d(LOG_TAG, "notification movie cursor count " + movieCursor.getCount());
-                    if(movieCursor == null || movieCursor.getCount() <= 0) {
-                        notifyMovie(movieCursor, cinema);
-                    }
+                    //Log.d(LOG_TAG, "movieId: " + movieId);
 
                     String movieUrl = rottentomatoesAPI.getMovieJsonUrl(searchJson);
-                    Log.d(LOG_TAG, "movieJson: " + movieUrl);
+                    //Log.d(LOG_TAG, "movieJson: " + movieUrl);
                     JSONObject theMovieJson = rottentomatoesAPI.getMovieJson(movieUrl);
 
                     Integer movie_id = insertMovie(cinema_id, movieTitle, theMovieJson);
                     Log.d(LOG_TAG, "Db movie Id: " + movie_id);
+
+                    notifyMovie(cinema, movieTitle, (String)theMovieJson.get("mpaa_rating"));
+
                     insertMovieCast(movie_id, theMovieJson);
                     insertMovieReviews(movie_id, theMovieJson);
 
@@ -334,20 +329,23 @@ public class SilverbirdmoviisSyncAdapter extends AbstractThreadedSyncAdapter {
                     title = title.substring(0,title.indexOf(":"));
                     title = title.trim();
                 }
-                Log.d(LOG_TAG, "Formated title: " + title + "-");
+                //Log.d(LOG_TAG, "Formated title: " + title + "-");
                 movieTitles.add(title);
             }
 
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
+            //if movies cannot be loaded from rss, get currently in theatre movies from Rottentomatoes
+            movieTitles = rottentomatoesAPI.getCurrentlyInTheatre();
         }
 
         return movieTitles;
     }
 
-    private void notifyMovie(Cursor  movieCursor, String cinema) {
+    private void notifyMovie(String cinema, String movieTitle, String mpaaRating) {
         Context context = getContext();
+
         //checking the last update and notify if it' the first of the day
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
@@ -360,40 +358,38 @@ public class SilverbirdmoviisSyncAdapter extends AbstractThreadedSyncAdapter {
 
             if (System.currentTimeMillis() - lastSync >= DAY_IN_MILLIS) {
 
-                if (movieCursor.moveToFirst()) {
-                    String movieTitle = movieCursor.getString(2);
-                    String mpaaRating = movieCursor.getString(3);
+                int iconId = R.drawable.ic_launcher;
+                String title = context.getString(R.string.app_name);
 
-                    int iconId = R.drawable.ic_launcher;
-                    String title = context.getString(R.string.app_name);
+                String contentText = String.format(context.getString(R.string.format_notification),
+                        movieTitle, mpaaRating, cinema);
 
-                    String contentText = String.format(context.getString(R.string.format_notification),
-                            movieTitle, mpaaRating, cinema);
+                //Log.d(LOG_TAG, "notification: " + contentText);
 
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(getContext())
-                                    .setSmallIcon(iconId)
-                                    .setContentTitle(title)
-                                    .setContentText(contentText);
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(getContext())
+                                .setSmallIcon(iconId)
+                                .setContentTitle(title)
+                                .setContentText(contentText);
 
-                    Intent resultIntent = new Intent(context, MainActivity.class);
+                Intent resultIntent = new Intent(context, MainActivity.class);
 
-                    TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-                    stackBuilder.addNextIntent(resultIntent);
-                    PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
-                                    0, PendingIntent.FLAG_UPDATE_CURRENT);
-                    mBuilder.setContentIntent(resultPendingIntent);
+                TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+                stackBuilder.addNextIntent(resultIntent);
+                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
+                                0, PendingIntent.FLAG_UPDATE_CURRENT);
+                mBuilder.setContentIntent(resultPendingIntent);
 
-                    NotificationManager mNotificationManager =
-                            (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                    mNotificationManager.notify(MOVIIS_NOTIFICATION_ID, mBuilder.build());
+                NotificationManager mNotificationManager =
+                        (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.notify(MOVIIS_NOTIFICATION_ID, mBuilder.build());
 
-                    //refreshing last sync
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putLong(lastNotificationKey, System.currentTimeMillis());
-                    editor.commit();
-                }
+                //refreshing last sync
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putLong(lastNotificationKey, System.currentTimeMillis());
+                editor.commit();
             }
+
         }
 
     }
