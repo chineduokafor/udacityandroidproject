@@ -13,8 +13,7 @@ android {
     }
 
     signingConfigs {
-
-        gidimoConfig {
+        release {
             storeFile file("silverbirdmoviis.jks")
             storePassword "cinema"
             keyAlias "silverbirdmoviis"
@@ -26,11 +25,13 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:19.1.0'	
+    compile 'com.android.support:appcompat-v7:19.1.0'
+    compile 'com.android.support:support-v4:19.1.0'
 }

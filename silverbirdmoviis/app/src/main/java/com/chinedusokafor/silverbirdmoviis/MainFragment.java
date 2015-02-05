@@ -79,6 +79,9 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        cinema = prefs.getString(getString(R.string.pref_cinema_key),
+                getString(R.string.pref_cinema_ikeja));
     }
 
     @Override
@@ -98,8 +101,9 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         super.onResume();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String prefCinema = prefs.getString(getString(R.string.pref_cinema_key),
-                getString(R.string.pref_cinema_lagos));
+                getString(R.string.pref_cinema_ikeja));
         if (cinema != null && !cinema.equals(prefCinema)) {
+            Log.d(LOG_TAG, "MainFragment restart movie loader " + prefCinema);
             getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
         }
     }

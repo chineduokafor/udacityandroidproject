@@ -387,7 +387,7 @@ public class SilverbirdmoviisSyncAdapter extends AbstractThreadedSyncAdapter {
                 //refreshing last sync
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putLong(lastNotificationKey, System.currentTimeMillis());
-                editor.commit();
+                editor.apply();
             }
 
         }

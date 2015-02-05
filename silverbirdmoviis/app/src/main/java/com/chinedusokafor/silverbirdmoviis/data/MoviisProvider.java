@@ -98,11 +98,10 @@ public class MoviisProvider extends ContentProvider {
 
         selection = withCinemaSelection;
         selectionArgs = new String[]{cinema};
+        Cursor movieCursor = movieByCinemaBuilder.query(moviisDbHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
 
-        return movieByCinemaBuilder.query(moviisDbHelper.getReadableDatabase(),
-                projection, selection, selectionArgs,
-                null, null, sortOrder
-        );
+        return movieCursor;
     }
 
     private Cursor getMovieByCinemaAndDate(Uri uri, String[] projection, String sortOrder) {
