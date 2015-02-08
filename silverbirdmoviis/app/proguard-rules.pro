@@ -18,3 +18,4 @@
 
 -keep class com.android.support.** { *; }
 -keep interface com.android.support.** { *; }
+-keep class android.support.v7.widget.ShareActionProvider { *; }
